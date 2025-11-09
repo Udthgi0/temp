@@ -1,10 +1,35 @@
-import { Pool } from 'pg'; 
-import type{ OrderJobData } from './queue.js';
+import { Pool } from 'pg';
+import type { OrderJobData } from './queue.js'; 
 
-const pool = new Pool({
-  connectionString: process.env.POSTGRES_URL, // Render provides this
-});
 
+const dbConfig = {
+  ssl: {
+    rejectUnauthorized: false,
+  },
+};
+
+if (process.env.DATABASE_URL) {
+  console.log('[DB] DATABASE_URL found, connecting to Render Postgres.');
+  Object.assign(dbConfig, {
+    connectionString: process.env.DATABASE_URL,
+  });
+} else {
+  // --- Local: Use localhost ---
+  console.log('[DB] No DATABASE_URL found, connecting to localhost.');
+  Object.assign(dbConfig, {
+    user: 'postgres',
+    host: 'localhost',
+    database: 'postgres',
+    password: 'mysecretpassword',
+    port: 5433, 
+  });
+  delete dbConfig.ssl;
+}
+
+const pool = new Pool(dbConfig);
+
+pool.on('connect', () => console.log('[DB] Postgres connected.'));
+pool.on('error', (err) => console.error('[DB] Postgres connection error:', err));
 
 const createStatusEnum = async () => {
   await pool.query(`
@@ -40,7 +65,6 @@ export const createOrderTable = async () => {
   console.log('[DB] "orders" table ensured');
 };
 
-// --- Save a Successful Order ---
 export const saveConfirmedOrder = async (jobData: OrderJobData, result: any) => {
   const query = `
     INSERT INTO orders (
@@ -84,3 +108,5 @@ export const saveFailedOrder = async (jobData: OrderJobData, error: Error) => {
   await pool.query(query, values);
   console.log(`[DB] Saved FAILED order ${jobData.orderId}`);
 };
+
+export { pool };
