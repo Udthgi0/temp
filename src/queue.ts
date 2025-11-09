@@ -27,7 +27,7 @@ if (process.env.REDIS_URL) {
   // Add TLS for Render Redis
   connectionOptions.tls = {
     requestCert: true,
-    rejectUnauthorized: false // Or true depending on your cert setup, but false is common
+    rejectUnauthorized: false
   };
   
 } else {
