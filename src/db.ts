@@ -1,12 +1,8 @@
 import { Pool } from 'pg'; 
 import type{ OrderJobData } from './queue.js';
 
-export const pool = new Pool({
-  user: 'postgres', 
-  host: 'localhost',
-  database: 'postgres', 
-  password: 'mysecretpassword', 
-  port: 5433,
+const pool = new Pool({
+  connectionString: process.env.POSTGRES_URL, // Render provides this
 });
 
 
