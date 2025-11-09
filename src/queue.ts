@@ -12,12 +12,9 @@ export interface OrderJobData {
 
 export const QUEUE_NAME = 'order-processing';
 
-const redisConnection = new (IORedis as any)({
-  host: 'localhost',
-  port: 6379,
+const redisConnection = new Redis(process.env.REDIS_URL, { // Render provides this
   maxRetriesPerRequest: null,
 });
-
 export const orderQueue = new Queue<OrderJobData>(QUEUE_NAME, {
   connection: redisConnection,
   defaultJobOptions: {
