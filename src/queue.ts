@@ -1,5 +1,5 @@
 import { Queue, Worker, Job } from 'bullmq';
-import { Redis, type RedisOptions } from 'ioredis'; // Cleaned up imports
+import { Redis, type RedisOptions } from 'ioredis';
 
 export interface OrderJobData {
   orderId: string;
@@ -12,32 +12,32 @@ export const QUEUE_NAME = 'order-processing';
 
 // --- Create the Redis Connection (Handles both Local and Prod) ---
 
-const connectionOptions: RedisOptions = {
+let redisConnection: Redis;
+
+const commonOptions: RedisOptions = {
   maxRetriesPerRequest: null, // This is required for BullMQ
 };
 
 if (process.env.REDIS_URL) {
   // --- Production: Use the URL provided by Render ---
-  // Parse the Render URL to get connection options
-  const redisUrl = new URL(process.env.REDIS_URL);
-  
-  connectionOptions.host = redisUrl.hostname;
-  connectionOptions.port = parseInt(redisUrl.port);
-  connectionOptions.password = redisUrl.password;
-  // Add TLS for Render Redis
-  connectionOptions.tls = {
-    requestCert: true,
-    rejectUnauthorized: false
-  };
-  
+  // ioredis is smart enough to parse the URL and handle TLS automatically
+  console.log('[Queue] REDIS_URL found, connecting to Render Redis.');
+  redisConnection = new Redis(process.env.REDIS_URL, {
+    ...commonOptions,
+    // Add TLS options required by Render
+    tls: {
+      rejectUnauthorized: false
+    }
+  });
 } else {
   // --- Local: Use localhost ---
   console.log('[Queue] No REDIS_URL found, connecting to localhost.');
-  connectionOptions.host = 'localhost';
-  connectionOptions.port = 6379;
+  redisConnection = new Redis({
+    ...commonOptions,
+    host: 'localhost',
+    port: 6379,
+  });
 }
-
-const redisConnection = new Redis(connectionOptions);
 
 redisConnection.on('connect', () => console.log('[Queue] Redis connected.'));
 redisConnection.on('error', (err) => console.error('[Queue] Redis connection error:', err));
@@ -67,7 +67,6 @@ export const initializeWorker = (processor: (job: Job<OrderJobData>) => Promise<
   });
 
   worker.on('failed', (job, err) => {
-    // Added null checks just in case a job fails very early
     console.log(`[Worker] Job ${job?.id ?? 'unknown'} (Order ${job?.data?.orderId ?? 'unknown'}) has failed with ${err.message}`);
   });
 };
