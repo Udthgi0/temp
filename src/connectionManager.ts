@@ -3,6 +3,9 @@ import { WebSocket } from 'ws';
 const connectionMap = new Map<string, WebSocket>();
 
 export const connectionManager = {
+    clear() {
+    connectionMap.clear();
+  },
   
   /**
   

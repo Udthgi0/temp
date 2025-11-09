@@ -1,7 +1,7 @@
 import { Pool } from 'pg'; 
-import { type OrderJobData } from './queue.js';
+import type{ OrderJobData } from './queue.js';
 
-const pool = new Pool({
+export const pool = new Pool({
   user: 'postgres', 
   host: 'localhost',
   database: 'postgres', 
