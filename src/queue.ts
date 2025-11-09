@@ -1,5 +1,5 @@
 import { Queue, Worker, Job } from 'bullmq';
-import { Redis, RedisOptions } from 'ioredis'; // Cleaned up imports
+import { Redis, type RedisOptions } from 'ioredis'; // Cleaned up imports
 
 export interface OrderJobData {
   orderId: string;
